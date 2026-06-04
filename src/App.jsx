@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import BarberoPerfil from "./BarberoPerfil";
 import { usePersistence } from "./usePersistence";
 import StatsBar from "./StatsBar";
@@ -123,6 +122,9 @@ function Dashboard({
   handleDeleteConfirm,
   setConfirmId,
 }) {
+  // ✅ FIX: useNavigate dentro del árbol de BrowserRouter
+  const navigate = useNavigate();
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--ink)" }}>
       {/* topbar */}
@@ -310,7 +312,8 @@ function Dashboard({
                 onView={setProfileTarget}
                 onEdit={openEdit}
                 onDelete={handleDeleteRequest}
-                onProfile={(id) => navigate(`/barbero/${id}`)} // ← así, no window.location.href
+                // ✅ FIX: usar navigate en lugar de window.location.href
+                onProfile={(id) => navigate(`/barbero/${id}`)}
               />
             ))}
           </div>
@@ -374,4 +377,8 @@ const filterSelect = {
   border: "1px solid var(--border)",
   color: "var(--text)",
   padding: "8px 12px",
-  fontSize: "0.
+  fontSize: "0.83rem",
+  borderRadius: 3,
+  outline: "none",
+  cursor: "pointer",
+};

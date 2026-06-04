@@ -6,7 +6,14 @@ function initials(b) {
   return ((b.name[0] || "") + (b.last[0] || "")).toUpperCase();
 }
 
-export default function BarberoCard({ barbero: b, onView, onEdit, onDelete }) {
+// ✅ FIX: recibir onProfile como prop en lugar de llamar navigate() directamente
+export default function BarberoCard({
+  barbero: b,
+  onView,
+  onEdit,
+  onDelete,
+  onProfile,
+}) {
   return (
     <div
       onClick={() => onView(b)}
@@ -167,7 +174,8 @@ export default function BarberoCard({ barbero: b, onView, onEdit, onDelete }) {
           <IconBtn
             icon="ti-external-link"
             title="Ver perfil público"
-            onClick={() => navigate(`/barbero/${b.id}`)}
+            // ✅ FIX: usar onProfile(b.id) en lugar de navigate()
+            onClick={() => onProfile(b.id)}
           />
           <IconBtn icon="ti-edit" title="Editar" onClick={() => onEdit(b)} />
           <IconBtn
