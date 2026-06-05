@@ -29,7 +29,8 @@ const EMPTY = {
   branch: "Los Magallanes",
   color: "#b8976a",
   hora: "8:00am - 8:00pm",
-  photos: [], // ✅ NUEVO: portafolio de fotos
+  photos: [],
+  avatar: null,
 };
 
 export default function BarberoForm({ open, onClose, onSave, initial }) {
@@ -96,6 +97,14 @@ export default function BarberoForm({ open, onClose, onSave, initial }) {
 
         {/* body */}
         <div style={modalBody}>
+          {/* avatar */}
+          <Field label="Foto del barbero">
+            <AvatarUpload
+              avatar={form.avatar}
+              onChange={(avatar) => set("avatar", avatar)}
+            />
+          </Field>
+
           <div style={row2}>
             <Field label="Nombre">
               <input
@@ -213,85 +222,10 @@ export default function BarberoForm({ open, onClose, onSave, initial }) {
 
           {/* ✅ NUEVO: sección de fotos del portafolio */}
           <Field label="Portafolio de trabajo">
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-
-              {/* botón para subir fotos */}
-              <label style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                background: "var(--ink3)",
-                border: `1px dashed ${ACCENT}60`,
-                borderRadius: 3,
-                padding: "12px",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                color: ACCENT,
-                letterSpacing: "0.05em",
-                transition: "border-color 0.2s",
-              }}>
-                <i className="ti ti-camera-plus" style={{ fontSize: 18 }} />
-                Agregar fotos
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files);
-                    files.forEach((file) => {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => {
-                        set("photos", [...(form.photos || []), ev.target.result]);
-                      };
-                      reader.readAsDataURL(file);
-                    });
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-
-              {/* grid de fotos subidas */}
-              {(form.photos || []).length > 0 && (
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 6,
-                }}>
-                  {(form.photos || []).map((src, i) => (
-                    <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: 3, overflow: "hidden" }}>
-                      <img
-                        src={src}
-                        alt={`foto ${i + 1}`}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                      <button
-                        onClick={() => set("photos", form.photos.filter((_, idx) => idx !== i))}
-                        style={{
-                          position: "absolute",
-                          top: 4,
-                          right: 4,
-                          background: "rgba(0,0,0,0.7)",
-                          border: "none",
-                          color: "#fff",
-                          width: 22,
-                          height: 22,
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                          fontSize: 12,
-                        }}
-                      >
-                        <i className="ti ti-x" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <PhotoDropZone
+              photos={form.photos || []}
+              onChange={(photos) => set("photos", photos)}
+            />
           </Field>
         </div>
 
@@ -305,6 +239,253 @@ export default function BarberoForm({ open, onClose, onSave, initial }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Avatar upload component
+function AvatarUpload({ avatar, onChange }) {
+  const fileRef = React.useRef();
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => onChange(ev.target.result);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      {/* preview */}
+      <div
+        onClick={() => fileRef.current?.click()}
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: "50%",
+          background: avatar ? "transparent" : "var(--ink3)",
+          border: `2px dashed ${ACCENT}60`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          cursor: "pointer",
+          flexShrink: 0,
+          transition: "border-color 0.2s",
+        }}
+      >
+        {avatar ? (
+          <img
+            src={avatar}
+            alt="avatar"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <i
+            className="ti ti-user-plus"
+            style={{ fontSize: 24, color: `${ACCENT}80` }}
+          />
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button
+          onClick={() => fileRef.current?.click()}
+          style={{
+            background: "var(--ink3)",
+            border: `1px solid ${ACCENT}50`,
+            color: ACCENT,
+            padding: "7px 14px",
+            fontSize: "0.78rem",
+            borderRadius: 3,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <i className="ti ti-upload" />
+          {avatar ? "Cambiar foto" : "Subir foto"}
+        </button>
+        {avatar && (
+          <button
+            onClick={() => onChange(null)}
+            style={{
+              background: "transparent",
+              border: "1px solid var(--border)",
+              color: "var(--text3)",
+              padding: "7px 14px",
+              fontSize: "0.78rem",
+              borderRadius: 3,
+              cursor: "pointer",
+            }}
+          >
+            Quitar foto
+          </button>
+        )}
+        <span style={{ fontSize: "0.7rem", color: "var(--text3)" }}>
+          PNG, JPG o WEBP
+        </span>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleFile}
+      />
+    </div>
+  );
+}
+
+// ✅ DRAG & DROP: componente de zona de arrastre para fotos
+function PhotoDropZone({ photos, onChange }) {
+  const [dragging, setDragging] = React.useState(false);
+  const fileRef = useRef();
+
+  const readFiles = (files) => {
+    const validFiles = Array.from(files).filter((f) =>
+      f.type.startsWith("image/"),
+    );
+    if (!validFiles.length) return;
+
+    const promises = validFiles.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target.result);
+          reader.readAsDataURL(file);
+        }),
+    );
+
+    Promise.all(promises).then((results) => {
+      onChange([...photos, ...results]);
+    });
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    readFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => setDragging(false);
+
+  const handleFileInput = (e) => {
+    readFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* zona de drop */}
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => fileRef.current?.click()}
+        style={{
+          background: dragging ? `${ACCENT}10` : "var(--ink3)",
+          border: `2px dashed ${dragging ? ACCENT : `${ACCENT}50`}`,
+          borderRadius: 4,
+          padding: "28px 16px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+      >
+        <i
+          className={`ti ${dragging ? "ti-photo-up" : "ti-cloud-upload"}`}
+          style={{ fontSize: 28, color: dragging ? ACCENT : `${ACCENT}80` }}
+        />
+        <span
+          style={{
+            fontSize: "0.82rem",
+            color: dragging ? ACCENT : "var(--text3)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {dragging
+            ? "Suelta las fotos aquí"
+            : "Arrastra fotos o haz clic para seleccionar"}
+        </span>
+        <span
+          style={{ fontSize: "0.7rem", color: "var(--text3)", opacity: 0.6 }}
+        >
+          PNG, JPG, WEBP — múltiples archivos permitidos
+        </span>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={handleFileInput}
+        />
+      </div>
+
+      {/* grid de fotos subidas */}
+      {photos.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 6,
+          }}
+        >
+          {photos.map((src, i) => (
+            <div
+              key={i}
+              style={{
+                position: "relative",
+                aspectRatio: "1",
+                borderRadius: 3,
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={src}
+                alt={`foto ${i + 1}`}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(photos.filter((_, idx) => idx !== i));
+                }}
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  right: 4,
+                  background: "rgba(0,0,0,0.7)",
+                  border: "none",
+                  color: "#fff",
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  fontSize: 12,
+                }}
+              >
+                <i className="ti ti-x" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
