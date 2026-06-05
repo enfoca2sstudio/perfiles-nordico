@@ -16,6 +16,7 @@ const DEFAULT_BARBEROS = [
     status: 'active',
     branch: 'Los Magallanes',
     color: '#b8976a',
+    photos: [], // ✅ NUEVO: portafolio de fotos
   },
   {
     id: 2,
@@ -30,6 +31,7 @@ const DEFAULT_BARBEROS = [
     status: 'active',
     branch: 'Ambas',
     color: '#7a9e7e',
+    photos: [], // ✅ NUEVO: portafolio de fotos
   },
   {
     id: 3,
@@ -44,6 +46,7 @@ const DEFAULT_BARBEROS = [
     status: 'active',
     branch: 'Catia — Calle México',
     color: '#7a8fa0',
+    photos: [], // ✅ NUEVO: portafolio de fotos
   },
 ];
 

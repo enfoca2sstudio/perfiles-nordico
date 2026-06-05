@@ -29,6 +29,7 @@ const EMPTY = {
   branch: "Los Magallanes",
   color: "#b8976a",
   hora: "8:00am - 8:00pm",
+  photos: [], // ✅ NUEVO: portafolio de fotos
 };
 
 export default function BarberoForm({ open, onClose, onSave, initial }) {
@@ -208,6 +209,89 @@ export default function BarberoForm({ open, onClose, onSave, initial }) {
               <option value="active">Activo</option>
               <option value="inactive">Inactivo</option>
             </select>
+          </Field>
+
+          {/* ✅ NUEVO: sección de fotos del portafolio */}
+          <Field label="Portafolio de trabajo">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
+              {/* botón para subir fotos */}
+              <label style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                background: "var(--ink3)",
+                border: `1px dashed ${ACCENT}60`,
+                borderRadius: 3,
+                padding: "12px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                color: ACCENT,
+                letterSpacing: "0.05em",
+                transition: "border-color 0.2s",
+              }}>
+                <i className="ti ti-camera-plus" style={{ fontSize: 18 }} />
+                Agregar fotos
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    files.forEach((file) => {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        set("photos", [...(form.photos || []), ev.target.result]);
+                      };
+                      reader.readAsDataURL(file);
+                    });
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+
+              {/* grid de fotos subidas */}
+              {(form.photos || []).length > 0 && (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 6,
+                }}>
+                  {(form.photos || []).map((src, i) => (
+                    <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: 3, overflow: "hidden" }}>
+                      <img
+                        src={src}
+                        alt={`foto ${i + 1}`}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <button
+                        onClick={() => set("photos", form.photos.filter((_, idx) => idx !== i))}
+                        style={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          background: "rgba(0,0,0,0.7)",
+                          border: "none",
+                          color: "#fff",
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          fontSize: 12,
+                        }}
+                      >
+                        <i className="ti ti-x" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </Field>
         </div>
 
