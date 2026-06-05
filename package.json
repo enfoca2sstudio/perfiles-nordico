@@ -1,5 +1,4 @@
 {
-  "homepage": "https://github.com/enfoca2sstudio/perfiles-nordico.git",
   "name": "nordico-barbers",
   "version": "1.0.0",
   "private": true,
@@ -11,8 +10,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "deploy": "gh-pages -d build"
+    "build": "react-scripts build"
   },
   "browserslist": {
     "production": [

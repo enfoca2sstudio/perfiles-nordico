@@ -66,19 +66,19 @@ export function usePersistence() {
   }, [barberos]);
 
   const addBarbero = (data) => {
-    const newBarbero = { ...data, id: Date.now() };
+    const newBarbero = { ...data, id: String(Date.now()) };
     setBarberosState(prev => [...prev, newBarbero]);
     return newBarbero;
   };
 
   const updateBarbero = (id, data) => {
     setBarberosState(prev =>
-      prev.map(b => b.id === id ? { ...b, ...data } : b)
+      prev.map(b => String(b.id) === String(id) ? { ...b, ...data } : b)
     );
   };
 
   const deleteBarbero = (id) => {
-    setBarberosState(prev => prev.filter(b => b.id !== id));
+    setBarberosState(prev => prev.filter(b => String(b.id) !== String(id)));
   };
 
   const resetToDefault = () => {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePersistence } from "./usePersistence";
 import logo from "./img/logo.png";
@@ -175,6 +175,35 @@ export default function BarberoPerfil() {
         </div>
       </div>
 
+      {/* portfolio */}
+      {b.photos && b.photos.length > 0 && (
+        <div
+          style={{
+            maxWidth: 560,
+            width: "100%",
+            margin: "0 auto",
+            padding: "0 1.5rem 2rem",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.63rem",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "var(--text3)",
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            Portafolio
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          </div>
+          <Carousel photos={b.photos} />
+        </div>
+      )}
+
       {/* content */}
       <div
         style={{
@@ -229,7 +258,7 @@ export default function BarberoPerfil() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {b.phone && (
               <a
-                href={`https://wa.me/${b.phone.replace(/\D/g, "")}`}
+                href={`https://wa.me/${b.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola ${b.name}, quisiera reservar un turno 💈`)}`}
                 target="_blank"
                 rel="noreferrer"
                 style={contactRow}
@@ -299,59 +328,6 @@ export default function BarberoPerfil() {
         </Section>
       </div>
 
-      {/* portfolio */}
-      {b.photos && b.photos.length > 0 && (
-        <div
-          style={{
-            maxWidth: 560,
-            width: "100%",
-            margin: "0 auto",
-            padding: "0 1.5rem 2rem",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "0.63rem",
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--text3)",
-              marginBottom: 12,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            Portafolio
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 6,
-            }}
-          >
-            {b.photos.map((src, i) => (
-              <div
-                key={i}
-                style={{
-                  aspectRatio: "1",
-                  borderRadius: 4,
-                  overflow: "hidden",
-                  background: "var(--ink2)",
-                }}
-              >
-                <img
-                  src={src}
-                  alt={`trabajo ${i + 1}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* footer */}
       <div
         style={{
@@ -369,6 +345,363 @@ export default function BarberoPerfil() {
     </div>
   );
 }
+
+function Carousel({ photos }) {
+  const [current, setCurrent] = useState(0);
+  const [lightbox, setLightbox] = useState(null);
+  const [animDir, setAnimDir] = useState(null); // "left" | "right"
+
+  const go = (idx, dir) => {
+    setAnimDir(dir);
+    setCurrent(idx);
+  };
+  const prev = () => go((current - 1 + photos.length) % photos.length, "right");
+  const next = () => go((current + 1) % photos.length, "left");
+
+  // touch swipe support
+  const touchStart = React.useRef(null);
+  const handleTouchStart = (e) => {
+    touchStart.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStart.current === null) return;
+    const diff = touchStart.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? next() : prev();
+    touchStart.current = null;
+  };
+
+  // compute which indices to show: prev, current, next
+  const prevIdx = (current - 1 + photos.length) % photos.length;
+  const nextIdx = (current + 1) % photos.length;
+
+  // For single photo, skip the coverflow chrome
+  if (photos.length === 1) {
+    return (
+      <>
+        <div
+          style={{
+            borderRadius: 8,
+            overflow: "hidden",
+            background: "var(--ink2)",
+            cursor: "zoom-in",
+            boxShadow: `0 0 0 1px rgba(255,145,0,0.2), 0 8px 32px rgba(0,0,0,0.6)`,
+          }}
+          onClick={() => setLightbox(0)}
+        >
+          <div style={{ aspectRatio: "4/3" }}>
+            <img
+              src={photos[0]}
+              alt="trabajo 1"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
+        </div>
+        {lightbox !== null && (
+          <Lightbox
+            photos={photos}
+            index={lightbox}
+            onClose={() => setLightbox(null)}
+            onNav={setLightbox}
+          />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <style>{`
+        @keyframes cf-slide-in-left {
+          from { opacity: 0; transform: translateX(40px) scale(0.92); }
+          to   { opacity: 1; transform: translateX(0)   scale(1);    }
+        }
+        @keyframes cf-slide-in-right {
+          from { opacity: 0; transform: translateX(-40px) scale(0.92); }
+          to   { opacity: 1; transform: translateX(0)    scale(1);    }
+        }
+      `}</style>
+
+      {/* coverflow track */}
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 0,
+          userSelect: "none",
+          padding: "12px 0 8px",
+          overflow: "hidden",
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* prev card */}
+        <div
+          onClick={prev}
+          style={{
+            position: "absolute",
+            left: 0,
+            width: "28%",
+            aspectRatio: "3/4",
+            borderRadius: 6,
+            overflow: "hidden",
+            opacity: 0.35,
+            transform: "scale(0.82) translateX(18%)",
+            transformOrigin: "right center",
+            cursor: "pointer",
+            transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+            zIndex: 1,
+            filter: "brightness(0.55)",
+          }}
+        >
+          <img
+            src={photos[prevIdx]}
+            alt={`trabajo ${prevIdx + 1}`}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+
+        {/* active card */}
+        <div
+          key={current}
+          style={{
+            position: "relative",
+            width: "58%",
+            aspectRatio: "3/4",
+            borderRadius: 8,
+            overflow: "hidden",
+            zIndex: 3,
+            boxShadow: `0 0 0 1.5px ${ACCENT}55, 0 12px 48px rgba(0,0,0,0.75)`,
+            cursor: "zoom-in",
+            transition: "box-shadow 0.35s",
+            animation:
+              animDir === "left"
+                ? "cf-slide-in-left 0.35s cubic-bezier(0.4,0,0.2,1)"
+                : animDir === "right"
+                  ? "cf-slide-in-right 0.35s cubic-bezier(0.4,0,0.2,1)"
+                  : "none",
+          }}
+          onClick={() => setLightbox(current)}
+        >
+          <img
+            src={photos[current]}
+            alt={`trabajo ${current + 1}`}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          {/* zoom hint */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 10,
+              right: 10,
+              background: "rgba(0,0,0,0.55)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "50%",
+              width: 30,
+              height: 30,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "rgba(255,255,255,0.7)",
+              fontSize: 14,
+              pointerEvents: "none",
+            }}
+          >
+            <i className="ti ti-zoom-in" />
+          </div>
+          {/* counter badge */}
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              fontSize: "0.65rem",
+              letterSpacing: "0.1em",
+              color: "rgba(255,255,255,0.8)",
+              background: "rgba(0,0,0,0.55)",
+              padding: "2px 8px",
+              borderRadius: 20,
+            }}
+          >
+            {current + 1} / {photos.length}
+          </div>
+        </div>
+
+        {/* next card */}
+        <div
+          onClick={next}
+          style={{
+            position: "absolute",
+            right: 0,
+            width: "28%",
+            aspectRatio: "3/4",
+            borderRadius: 6,
+            overflow: "hidden",
+            opacity: 0.35,
+            transform: "scale(0.82) translateX(-18%)",
+            transformOrigin: "left center",
+            cursor: "pointer",
+            transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+            zIndex: 1,
+            filter: "brightness(0.55)",
+          }}
+        >
+          <img
+            src={photos[nextIdx]}
+            alt={`trabajo ${nextIdx + 1}`}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      </div>
+
+      {/* dot indicators */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 6,
+          marginTop: 10,
+        }}
+      >
+        {photos.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => go(i, i > current ? "left" : "right")}
+            style={{
+              width: i === current ? 20 : 6,
+              height: 6,
+              borderRadius: 3,
+              background: i === current ? ACCENT : "rgba(255,255,255,0.2)",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* lightbox */}
+      {lightbox !== null && (
+        <Lightbox
+          photos={photos}
+          index={lightbox}
+          onClose={() => setLightbox(null)}
+          onNav={setLightbox}
+        />
+      )}
+    </>
+  );
+}
+
+function Lightbox({ photos, index, onClose, onNav }) {
+  const prev = (e) => {
+    e.stopPropagation();
+    onNav((i) => (i - 1 + photos.length) % photos.length);
+  };
+  const next = (e) => {
+    e.stopPropagation();
+    onNav((i) => (i + 1) % photos.length);
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.96)",
+        zIndex: 2000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1rem",
+      }}
+    >
+      <button
+        onClick={prev}
+        style={{
+          ...arrowBtn,
+          position: "fixed",
+          left: 16,
+          top: "50%",
+          transform: "translateY(-50%)",
+        }}
+      >
+        <i className="ti ti-chevron-left" />
+      </button>
+
+      <img
+        src={photos[index]}
+        alt={`trabajo ${index + 1}`}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: "90vw",
+          maxHeight: "85vh",
+          objectFit: "contain",
+          borderRadius: 6,
+        }}
+      />
+
+      <button
+        onClick={next}
+        style={{
+          ...arrowBtn,
+          position: "fixed",
+          right: 16,
+          top: "50%",
+          transform: "translateY(-50%)",
+        }}
+      >
+        <i className="ti ti-chevron-right" />
+      </button>
+
+      <button
+        onClick={onClose}
+        style={{
+          ...arrowBtn,
+          position: "fixed",
+          top: 16,
+          right: 16,
+          transform: "none",
+        }}
+      >
+        <i className="ti ti-x" />
+      </button>
+
+      <div
+        style={{
+          position: "fixed",
+          bottom: 20,
+          fontSize: "0.75rem",
+          color: "rgba(255,255,255,0.45)",
+          letterSpacing: "0.1em",
+        }}
+      >
+        {index + 1} / {photos.length}
+      </div>
+    </div>
+  );
+}
+
+const arrowBtn = {
+  position: "absolute",
+  top: "50%",
+  transform: "translateY(-50%)",
+  background: "rgba(0,0,0,0.6)",
+  border: `1px solid rgba(255,255,255,0.15)`,
+  color: "#fff",
+  width: 36,
+  height: 36,
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  fontSize: 16,
+  zIndex: 10,
+};
 
 function Section({ title, children }) {
   return (

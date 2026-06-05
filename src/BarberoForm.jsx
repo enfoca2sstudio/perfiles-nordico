@@ -2,6 +2,26 @@ import React, { useState, useEffect, useRef } from "react";
 
 const ACCENT = "#f4ba19";
 
+// Comprime una imagen a base64 con tamaño máximo y calidad reducida
+function compressImage(file, maxWidth = 800, quality = 0.72) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 const BRANCHES = ["Los Magallanes", "Catia — Calle México", "Ambas"];
 
 const HORAS = ["8:00am - 5:00pm", "8:00am - 8:00pm", "8:00am - 9:00pm"];
@@ -76,6 +96,7 @@ export default function BarberoForm({ open, onClose, onSave, initial }) {
 
   const handleSave = () => {
     if (!form.name.trim()) return;
+    // Si es edición conserva el id; si es nuevo, usePersistence lo asigna vía addBarbero
     onSave(form);
   };
 
@@ -250,9 +271,7 @@ function AvatarUpload({ avatar, onChange }) {
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file || !file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => onChange(ev.target.result);
-    reader.readAsDataURL(file);
+    compressImage(file, 400, 0.8).then(onChange);
     e.target.value = "";
   };
 
@@ -350,18 +369,9 @@ function PhotoDropZone({ photos, onChange }) {
     );
     if (!validFiles.length) return;
 
-    const promises = validFiles.map(
-      (file) =>
-        new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (ev) => resolve(ev.target.result);
-          reader.readAsDataURL(file);
-        }),
+    Promise.all(validFiles.map((file) => compressImage(file, 800, 0.72))).then(
+      (results) => onChange([...photos, ...results]),
     );
-
-    Promise.all(promises).then((results) => {
-      onChange([...photos, ...results]);
-    });
   };
 
   const handleDrop = (e) => {

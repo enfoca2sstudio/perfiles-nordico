@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  HashRouter,
-  BrowserRouter,
-  Routes,
-  Route,
-  useNavigate,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import BarberoPerfil from "./BarberoPerfil";
 import { usePersistence } from "./usePersistence";
 import StatsBar from "./StatsBar";
@@ -231,7 +225,7 @@ function Dashboard({
           <option value="inactive">Inactivos</option>
         </select>
 
-        <select
+        {/* <select
           style={filterSelect}
           value={filterBranch}
           onChange={(e) => setFilterBranch(e.target.value)}
@@ -240,7 +234,7 @@ function Dashboard({
           <option value="Los Magallanes">Los Magallanes</option>
           <option value="Catia — Calle México">Catia — Calle México</option>
           <option value="Ambas">Ambas</option>
-        </select>
+        </select> */}
       </div>
 
       {/* main grid */}
